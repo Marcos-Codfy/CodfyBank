@@ -75,4 +75,3 @@ A senha digitada não aparecerá na tela por questões de segurança.
 
 **Marcos Vinicius**
 
-* [LinkedIn]([(https://www.linkedin.com/in/marcos-vinicius-muniz-arruda-a38465370)]) * [GitHub](https://github.com/marcos-codfy) ````
