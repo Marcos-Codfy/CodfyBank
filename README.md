@@ -39,7 +39,7 @@ Para rodar o CodfyBank, você precisa ter o Python instalado em sua máquina.
     ```
 2.  Navegue até a pasta do projeto:
     ```bash
-    cd CodfyBank-f8e2b4f61a15578185dddb3db9694a4710713a5c/CodfyBank
+    cd <pasta no qual se encontra o projeto>
     ```
 3.  Execute o arquivo principal:
     ```bash
@@ -75,4 +75,4 @@ A senha digitada não aparecerá na tela por questões de segurança.
 
 **Marcos Vinicius**
 
-* [LinkedIn](https://www.linkedin.com/in/seu_perfil_linkedin) * [GitHub](https://github.com/marcos-codfy) ````
+* [LinkedIn]([https://www.linkedin.com/in/seu_perfil_linkedin](https://www.linkedin.com/in/marcos-vinicius-muniz-arruda-a38465370)) * [GitHub](https://github.com/marcos-codfy) ````
