@@ -1,343 +1,334 @@
-﻿import os 
+import os
 import getpass
-from time import sleep 
-import Customer 
+from time import sleep
+import Customer
 
-# VARIÁVEIS GLOBAIS 
-valid_login = False 
-user = Customer.Customer() 
+# GLOBAL VARIABLES
+valid_login = False
+user = Customer.Customer()
 
-# FUNÇÕES 
-def clear_screen(): 
-    os.system("cls" if os.name == "nt" else "clear") 
+# FUNCTIONS
+def clear_screen():
+    os.system("cls" if os.name == "nt" else "clear")
 
-
-def register_pix_key(resposta): 
-    """Registra uma nova chave Pix com validação de CPF, Telefone, CNPJ ou E-mail.""" 
-    if resposta != "sim": 
-        print("Operação cancelada.") 
-        sleep(2) 
-        return 
-
-    while True: 
-        clear_screen() 
-        print("Cadastro de Chave PIX") 
-        print("=======================") 
-        print("Tipos disponíveis:") 
-        print("1 – CPF") 
-        print("2 – Telefone") 
-        print("3 – CNPJ") 
-        print("4 – E-mail") 
-        tipo_input = input("Escolha o tipo de chave (1|2|3|4): ").strip() 
-
-        if tipo_input == "1": 
-            tipo = "cpf" 
-        elif tipo_input == "2": 
-            tipo = "telefone" 
-        elif tipo_input == "3": 
-            tipo = "cnpj" 
-        elif tipo_input == "4": 
-            tipo = "email" 
-        else: 
-            print("\nOpção de tipo inválida. Tente novamente.") 
-            sleep(2) 
-            continue 
-
-        chave = input(f"\nDigite sua chave ({tipo}): ").strip() 
-
-        # Normalizar e validar 
-        if tipo in ("cpf", "telefone", "cnpj"): 
-            digitos = "".join(filter(str.isdigit, chave)) 
-            tamanho = len(digitos) 
-            if ( 
-                (tipo == "cpf" and tamanho != 11) 
-                or (tipo == "telefone" and tamanho not in (10, 11)) 
-                or (tipo == "cnpj" and tamanho != 14) 
-            ): 
-                print("\nChave PIX inválida. Tente novamente.") 
-                sleep(2) 
-                continue 
-            chave_valida = digitos 
-        else:  # email 
-            if "@" not in chave or "." not in chave.split("@")[-1]: 
-                print("\nChave PIX inválida. Tente novamente.") 
-                sleep(2) 
-                continue 
-            chave_valida = chave.lower() 
-
-        # tudo ok: cadastra e confirma 
-        user.add_pix_key(tipo, chave_valida) 
-        print("\nChave PIX cadastrada com sucesso!") 
-        sleep(2) 
-        Pix() 
-        break 
-
-
-def Pix(): 
-    clear_screen() 
-    print("Área PIX") 
-    print("=======================") 
-
-    if not user.pix_keys: 
-        print("Sem chave PIX cadastrada.") 
-        print("\nDeseja cadastrar agora?") 
-        resposta = input("Digite 'sim' para cadastrar: ").strip().lower() 
-        register_pix_key(resposta) 
-    else: 
-        print("Chaves PIX cadastradas:") 
-        for p in user.pix_keys: 
-            print(f"- {p['tipo'].upper()}: {p['chave']}") 
-        print("=======================") 
-        print("\n1 – Cadastrar nova chave") 
-        print("2 – Voltar ao menu") 
-        escolha = input("Opção: ").strip() 
-        if escolha == "1": 
-            register_pix_key("sim") 
-
-def TransferenciaPix():
-    clear_screen()
-    print("Área de Transferência - PIX")
-    print("=======================")
-    pix_destino = input("Digite a chave PIX do destinatário: ").strip()
-    valor = input("Digite o valor a ser transferido: R$ ").strip().replace(',', '.')
-    # Validação simples para ver se é um número
-    if not valor.replace('.', '', 1).isdigit():
-        print("\nValor inválido. Por favor, digite um número.")
+def register_pix_key(response):
+    """Registers a new Pix key with validation for CPF, Phone, CNPJ, or E-mail."""
+    if response != "yes":
+        print("Operation cancelled.")
         sleep(2)
-        input("\nPressione Enter para voltar ao menu...")
         return
 
-    valor_float = float(valor)
-    if valor_float <= 0:
-        print("\nO valor da transferência deve ser positivo.")
-        sleep(2)
-        input("\nPressione Enter para voltar ao menu...")
-        return
+    while True:
+        clear_screen()
+        print("PIX Key Registration")
+        print("=======================")
+        print("Available types:")
+        print("1 – CPF")
+        print("2 – Phone")
+        print("3 – CNPJ")
+        print("4 – E-mail")
+        type_input = input("Choose the key type (1|2|3|4): ").strip()
 
-    # Lógica para verificar se a transferência é para si mesmo
-    chaves_do_usuario = []
-    for chave in user.pix_keys:
-        chaves_do_usuario.append(chave['chave'])
-
-    # Se a chave de destino está na lista de chaves do usuário
-    if pix_destino in chaves_do_usuario:
-        print(f"\nTransferindo R$ {valor_float:.2f} para você mesmo...")
-        sleep(2)
-        # Apenas registra no extrato, sem alterar o saldo
-        user.registrar_extrato(f"Transferência PIX para si mesmo de R$ {valor_float:.2f}")
-        print("Operação realizada com sucesso!")
-    
-    # Se for para outra pessoa, usa a lógica de débito normal
-    else:
-        print(f"\nTransferindo R$ {valor_float:.2f} para a chave PIX {pix_destino}...")
-        sleep(2)
-        if user.debito(valor_float):
-            print("Transferência realizada com sucesso!")
-            user.registrar_extrato(f"Transferência PIX de R$ {valor_float:.2f} para {pix_destino}")
+        if type_input == "1":
+            key_type = "cpf"
+        elif type_input == "2":
+            key_type = "phone"
+        elif type_input == "3":
+            key_type = "cnpj"
+        elif type_input == "4":
+            key_type = "email"
         else:
-            print("Saldo e limite insuficientes para a transferência.")
+            print("\nInvalid type option. Please try again.")
+            sleep(2)
+            continue
+
+        key_value = input(f"\nEnter your key ({key_type}): ").strip()
+
+        # Normalize and validate
+        if key_type in ("cpf", "phone", "cnpj"):
+            digits = "".join(filter(str.isdigit, key_value))
+            length = len(digits)
+            if (
+                (key_type == "cpf" and length != 11)
+                or (key_type == "phone" and length not in (10, 11))
+                or (key_type == "cnpj" and length != 14)
+            ):
+                print("\nInvalid PIX key. Please try again.")
+                sleep(2)
+                continue
+            valid_key = digits
+        else:  # email
+            if "@" not in key_value or "." not in key_value.split("@")[-1]:
+                print("\nInvalid PIX key. Please try again.")
+                sleep(2)
+                continue
+            valid_key = key_value.lower()
+
+        # everything is ok: register and confirm
+        user.add_pix_key(key_type, valid_key)
+        print("\nPIX key registered successfully!")
+        sleep(2)
+        Pix()
+        break
+
+def Pix():
+    clear_screen()
+    print("PIX Area")
+    print("=======================")
+
+    if not user.pix_keys:
+        print("No PIX key registered.")
+        print("\nDo you want to register one now?")
+        response = input("Enter 'yes' to register: ").strip().lower()
+        register_pix_key(response)
+    else:
+        print("Registered PIX keys:")
+        for p in user.pix_keys:
+            print(f"- {p['type'].upper()}: {p['key']}")
+        print("=======================")
+        print("\n1 – Register new key")
+        print("2 – Back to menu")
+        choice = input("Option: ").strip()
+        if choice == "1":
+            register_pix_key("yes")
+
+def PixTransfer():
+    clear_screen()
+    print("Transfer Area - PIX")
+    print("=======================")
+    destination_pix = input("Enter the recipient's PIX key: ").strip()
+    amount_str = input("Enter the amount to be transferred: R$ ").strip().replace(',', '.')
+    # Simple validation to check if it is a number
+    if not amount_str.replace('.', '', 1).isdigit():
+        print("\nInvalid amount. Please enter a number.")
+        sleep(2)
+        input("\nPress Enter to return to the menu...")
+        return
+
+    amount_float = float(amount_str)
+    if amount_float <= 0:
+        print("\nThe transfer amount must be positive.")
+        sleep(2)
+        input("\nPress Enter to return to the menu...")
+        return
+
+    # Logic to check if the transfer is to oneself
+    user_keys = []
+    for key in user.pix_keys:
+        user_keys.append(key['key'])
+
+    # If the destination key is in the user's key list
+    if destination_pix in user_keys:
+        print(f"\nTransferring R$ {amount_float:.2f} to yourself...")
+        sleep(2)
+        # Only registers in the statement, without changing the balance
+        user.register_statement(f"PIX Transfer to self of R$ {amount_float:.2f}")
+        print("Operation successful!")
+    
+    # If it's for another person, use the normal debit logic
+    else:
+        print(f"\nTransferring R$ {amount_float:.2f} to the PIX key {destination_pix}...")
+        sleep(2)
+        if user.debit(amount_float):
+            print("Transfer successful!")
+            user.register_statement(f"PIX Transfer of R$ {amount_float:.2f} to {destination_pix}")
+        else:
+            print("Insufficient balance and limit for the transfer.")
             sleep(2)
             
-    input("\nPressione Enter para voltar ao menu...")
+    input("\nPress Enter to return to the menu...")
 
-
-def TransferenciaAgenciaConta(): 
-    clear_screen() 
-    print("Área de Transferência - Agência e Conta") 
-    print("=======================") 
-    agencia_destino = input("Digite a agência do destinatário: ").strip() 
-    conta_destino = input("Digite a conta do destinatário: ").strip() 
-    valor = input("Digite o valor a ser transferido: R$ ").strip() 
-    valor_float = float(valor)
-    print(f"\nTransferindo R$ {valor} para a conta {conta_destino} da agência {agencia_destino}...") 
-    sleep(2) 
-    if user.debito(valor_float):
-        print("Transferência realizada com sucesso!") 
-        user.registrar_extrato(f"Transferência de R$ {valor_float:.2f} para {agencia_destino}/{conta_destino}")
-    else:
-        print("Saldo e limite insuficientes para a transferência.")
-        sleep(2)
-    input("\nPressione Enter para voltar ao menu...")
-
-
-def Deposito(): 
-    clear_screen() 
-    print("Área de Depósito") 
-    print("=======================") 
-    valor = input("Digite o valor a ser depositado: R$ ").strip()
-    print(f"\nDepositando R$ {valor} na sua conta...")
-    sleep(2)
-    print("Depósito realizado com sucesso!")
-    user.credito(float(valor))  # Só esta linha já atualiza saldo e limite corretamente
-    user.registrar_extrato(f"Depósito de R$ {float(valor):.2f}")
-    input("\nPressione Enter para voltar ao menu...") 
-
-
-def Saque(): 
-    clear_screen() 
-    print("Área de Saque") 
-    print("=======================") 
-    valor = input("Digite o valor a ser sacado: R$ ").strip() 
-    valor_float = float(valor)
-    if user.debito(valor_float):
-        print(f"\nSacando R$ {valor} da sua conta...") 
-        sleep(2) 
-        print("Saque realizado com sucesso!") 
-        user.registrar_extrato(f"Saque de R$ {valor_float:.2f}")
-    else:
-        print("\nSaldo e limite insuficientes para o saque.") 
-        sleep(2)
-    input("\nPressione Enter para voltar ao menu...")
-
-def AjustarLimite():
+def AgencyAndAccountTransfer():
     clear_screen()
-    print("Ajuste de Limite Disponível")
+    print("Transfer Area - Agency and Account")
+    print("=======================")
+    destination_agency = input("Enter the recipient's agency: ").strip()
+    destination_account = input("Enter the recipient's account: ").strip()
+    amount_str = input("Enter the amount to be transferred: R$ ").strip()
+    amount_float = float(amount_str)
+    print(f"\nTransferring R$ {amount_str} to account {destination_account} of agency {destination_agency}...")
+    sleep(2)
+    if user.debit(amount_float):
+        print("Transfer successful!")
+        user.register_statement(f"Transfer of R$ {amount_float:.2f} to {destination_agency}/{destination_account}")
+    else:
+        print("Insufficient balance and limit for the transfer.")
+        sleep(2)
+    input("\nPress Enter to return to the menu...")
+
+def Deposit():
+    clear_screen()
+    print("Deposit Area")
+    print("=======================")
+    amount_str = input("Enter the amount to be deposited: R$ ").strip()
+    print(f"\nDepositing R$ {amount_str} into your account...")
+    sleep(2)
+    print("Deposit successful!")
+    user.credit(float(amount_str))  # This line alone correctly updates the balance and limit
+    user.register_statement(f"Deposit of R$ {float(amount_str):.2f}")
+    input("\nPress Enter to return to the menu...")
+
+def Withdraw():
+    clear_screen()
+    print("Withdrawal Area")
+    print("=======================")
+    amount_str = input("Enter the amount to withdraw: R$ ").strip()
+    amount_float = float(amount_str)
+    if user.debit(amount_float):
+        print(f"\nWithdrawing R$ {amount_str} from your account...")
+        sleep(2)
+        print("Withdrawal successful!")
+        user.register_statement(f"Withdrawal of R$ {amount_float:.2f}")
+    else:
+        print("\nInsufficient balance and limit for withdrawal.")
+        sleep(2)
+    input("\nPress Enter to return to the menu...")
+    
+def AdjustLimit():
+    clear_screen()
+    print("Available Limit Adjustment")
     print("===========================")
     
-    valor_utilizado = user.limite_maximo - user.limit
+    used_amount = user.maximum_limit - user.limit
     
-    print(f"Seu limite máximo aprovado é: R$ {user.limite_maximo:.2f}")
-    print(f"Seu limite disponível atual é: R$ {user.limit:.2f}")
-    if valor_utilizado > 0:
-        print(f"Você já está utilizando R$ {valor_utilizado:.2f} do seu limite.")
+    print(f"Your maximum approved limit is: R$ {user.maximum_limit:.2f}")
+    print(f"Your current available limit is: R$ {user.limit:.2f}")
+    if used_amount > 0:
+        print(f"You are already using R$ {used_amount:.2f} of your limit.")
     
-    print("\nVocê pode ajustar seu limite disponível.")
-    print(f"O valor deve estar entre R$ {valor_utilizado:.2f} e R$ {user.limite_maximo:.2f}.")
+    print("\nYou can adjust your available limit.")
+    print(f"The value must be between R$ {used_amount:.2f} and R$ {user.maximum_limit:.2f}.")
     
-    valor_str = input("Digite o novo valor para o limite disponível: R$ ").strip().replace(',', '.')
+    value_str = input("Enter the new value for the available limit: R$ ").strip().replace(',', '.')
     
-    # Validação simples para ver se é um número
-    if not valor_str.replace('.', '', 1).isdigit():
-        print("\nEntrada inválida. Por favor, digite um número.")
+    # Simple validation to check if it is a number
+    if not value_str.replace('.', '', 1).isdigit():
+        print("\nInvalid input. Please enter a number.")
     else:
-        novo_limite = float(valor_str)
-        # Chama o método da classe que contém a lógica
-        mensagem = user.ajustar_limite(novo_limite)
-        print(f"\n{mensagem}")
+        new_limit = float(value_str)
+        # Calls the class method that contains the logic
+        message = user.adjust_limit(new_limit)
+        print(f"\n{message}")
 
     sleep(3)
-    input("\nPressione Enter para voltar ao menu...")
+    input("\nPress Enter to return to the menu...")
 
-
-def Extrato(): 
-    clear_screen() 
-    print("Extrato da Conta") 
-    print("=======================") 
-    print(f"Cliente: {user.name} {user.last_name}") 
-    print(f"Agência: {user.agency}  Conta: {user.account}") 
-    print(f"Saldo Atual: R$ {user.balance:.2f}") 
-    print("=======================") 
-    print("Operações:")
-    if not user.extrato:
-        print("Nenhuma operação realizada.")
-    else:
-        for operacao in user.extrato:
-            print(f"- {operacao}")
-    input("\nPressione Enter para voltar ao menu...") 
-
-# FUNÇÃO CONFIGURACOES ATUALIZADA
-
-def Configuracoes():
+def Statement():
     clear_screen()
-    print("Área de Configurações")
+    print("Account Statement")
     print("=======================")
-    print(f"Nome: {user.name} {user.last_name}")
-    print(f"Agência: {user.agency}  Conta: {user.account}")
+    print(f"Customer: {user.name} {user.last_name}")
+    print(f"Agency: {user.agency}  Account: {user.account}")
+    print(f"Current Balance: R$ {user.balance:.2f}")
+    print("=======================")
+    print("Operations:")
+    if not user.statement:
+        print("No operations performed.")
+    else:
+        for operation in user.statement:
+            print(f"- {operation}")
+    input("\nPress Enter to return to the menu...")
+
+# UPDATED SETTINGS FUNCTION
+def Settings():
+    clear_screen()
+    print("Settings Area")
+    print("=======================")
+    print(f"Name: {user.name} {user.last_name}")
+    print(f"Agency: {user.agency}  Account: {user.account}")
     print("----------------------")
-    print("1 - Alterar Nome")
-    print("2 - Alterar Senha")
-    print("3 - Ajustar Limite")
-    print("0 - Voltar ao Menu")
-    escolha = input("Opção: ").strip()
+    print("1 - Change Name")
+    print("2 - Change Password")
+    print("3 - Adjust Limit")
+    print("0 - Back to Menu")
+    choice = input("Option: ").strip()
 
-    if escolha == "1":
-        novo_nome = input("Digite o novo nome: ").strip()
-        novo_sobrenome = input("Digite o novo sobrenome: ").strip()
-        user.name = novo_nome
-        user.last_name = novo_sobrenome
-        print("Nome alterado com sucesso!...")
+    if choice == "1":
+        new_first_name = input("Enter the new first name: ").strip()
+        new_last_name = input("Enter the new last name: ").strip()
+        user.name = new_first_name
+        user.last_name = new_last_name
+        print("Name changed successfully!...")
         sleep(2)
-    elif escolha == "2":
-        print("Para alterar a senha, informe a senha atual.")
-        senha_atual = input("Senha atual: ").strip()
-        if senha_atual == user.password:
-            nova_senha = input("Digite a nova senha: ").strip()
-            confirmar_senha = input("Confirme a nova senha: ").strip()
-            if nova_senha == confirmar_senha:
-                user.password = nova_senha
-                print("Senha alterada com sucesso!...")
+    elif choice == "2":
+        print("To change the password, please provide the current password.")
+        current_password = input("Current password: ").strip()
+        if current_password == user.password:
+            new_password = input("Enter the new password: ").strip()
+            confirm_password = input("Confirm the new password: ").strip()
+            if new_password == confirm_password:
+                user.password = new_password
+                print("Password changed successfully!...")
             else:
-                print("As senhas não coincidem. Tente novamente.")
+                print("The passwords do not match. Please try again.")
         else:
-            print("Senha atual incorreta.")
+            print("Incorrect current password.")
         sleep(2)
-    elif escolha == "3":
-        AjustarLimite()
+    elif choice == "3":
+        AdjustLimit()
 
+def Home():
+    clear_screen()
+    print("Welcome to Codfy Bank")
+    print("=======================")
+    print(f"Customer: {user.name} {user.last_name}")
+    print(f"Agency: {user.agency}  Account: {user.account}")
+    print(f"Balance: R$ {user.balance:.2f} - Limit: {user.limit}")
+    print("____________")
+    print("1 – Deposit")
+    print("2 – Withdraw")
+    print("3 – Statement")
+    print("4 – PIX")
+    print("5 - Transfer - PIX")
+    print("6 - Transfer - Agency and Account")
+    print("7 - Settings")
+    print("0 – Exit")
+    print("____________")
 
-def Home(): 
-    clear_screen() 
-    print("Bem vindo ao Codfy Bank") 
-    print("=======================") 
-    print(f"Cliente: {user.name} {user.last_name}") 
-    print(f"Agência: {user.agency}  Conta: {user.account}") 
-    print(f"Saldo: R$ {user.balance:.2f} - Limite: {user.limit}") 
-    print("____________") 
-    print("1 – Deposito") 
-    print("2 – Saque") 
-    print("3 – Extrato") 
-    print("4 – PIX") 
-    print("5 - Transferência - PIX") 
-    print("6 - Transferência - Agência e Conta") 
-    print("7 - Configurações")
-    print("0 – Sair") 
-    print("____________") 
-
-    option_menu = input("Selecione a Opção desejada: ").strip() 
+    option_menu = input("Select the desired option: ").strip()
     if option_menu == "1":
-        Deposito()
+        Deposit()
     elif option_menu == "2":
-        Saque()
+        Withdraw()
     elif option_menu == "3":
-        Extrato()
+        Statement()
     elif option_menu == "4":
         Pix()
     elif option_menu == "5":
-        TransferenciaPix()
+        PixTransfer()
     elif option_menu == "6":
-        TransferenciaAgenciaConta()
+        AgencyAndAccountTransfer()
     elif option_menu == "7":
-        Configuracoes()
+        Settings()
     elif option_menu == "0":
-        print("\nSaindo...")
+        print("\nExiting...")
         sleep(1)
         exit()
     else:
-        print("\nOpção ainda não implementada.")
+        print("\nOption not yet implemented.")
         sleep(1.5)
 
-# 5. EXECUÇÃO PRINCIPAL DO PROGRAMA 
-# Login 
-while not valid_login: 
-    clear_screen() 
-    print("Bem vindo ao Codfy Bank") 
-    print("=======================") 
-    input_agency = input("Digite sua agência: ").strip() 
-    input_account = input("Digite sua conta: ").strip() 
-    # Aqui a senha não aparece na tela
-    input_password = getpass.getpass("Digite sua senha: ").strip()  
+# 5. MAIN PROGRAM EXECUTION
+# Login
+while not valid_login:
+    clear_screen()
+    print("Welcome to Codfy Bank")
+    print("=======================")
+    input_agency = input("Enter your agency: ").strip()
+    input_account = input("Enter your account: ").strip()
+    # Here the password does not appear on the screen
+    input_password = getpass.getpass("Enter your password: ").strip()
 
-    if (input_agency == user.agency and 
-        input_account == user.account and 
-        input_password == user.password): 
-        print("\nLogin realizado com sucesso!") 
-        valid_login = True 
-        sleep(1.5) 
-    else: 
-        print("\nDados incorretos!") 
+    if (input_agency == user.agency and
+        input_account == user.account and
+        input_password == user.password):
+        print("\nLogin successful!")
+        valid_login = True
+        sleep(1.5)
+    else:
+        print("\nIncorrect data!")
         sleep(1.5)
 
-# Loop principal 
-while True: 
+# Main loop
+while True:
     Home()
-
